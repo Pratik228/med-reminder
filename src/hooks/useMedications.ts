@@ -113,6 +113,31 @@ export const useMedications = () => {
     }
   };
 
+  // Reset medication status at midnight
+  useEffect(() => {
+    const now = new Date();
+    const tomorrow = new Date(now);
+    tomorrow.setDate(tomorrow.getDate() + 1);
+    tomorrow.setHours(0, 0, 0, 0);
+
+    const timeUntilMidnight = tomorrow.getTime() - now.getTime();
+
+    const timeoutId = setTimeout(() => {
+      // Reset all medications to active (not taken) at midnight
+      medications.forEach(async (medication) => {
+        if (!medication.isActive) {
+          try {
+            await updateMedication(medication.id, { isActive: true });
+          } catch (error) {
+            console.error("Error resetting medication status:", error);
+          }
+        }
+      });
+    }, timeUntilMidnight);
+
+    return () => clearTimeout(timeoutId);
+  }, [medications, user]);
+
   // Listen to medications changes
   useEffect(() => {
     if (!user) {

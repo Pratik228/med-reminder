@@ -1,7 +1,6 @@
 "use client";
 import { motion } from "framer-motion";
 import { Clock, Bell, Check } from "lucide-react";
-
 import { Medication } from "@/types";
 
 interface TodaysRemindersProps {

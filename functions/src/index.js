@@ -130,9 +130,9 @@ async function sendMedicationReminderEmail(notification) {
     }
 
     // Send email reminder
-    const { data, error } = await resend.emails.send({
-      from: "MedLove Reminders <reminders@yourdomain.com>", // Replace with your verified domain
-      to: [userEmail],
+    const mailOptions = {
+      from: `"MedLove Reminders" <${functions.config().gmail.user}>`,
+      to: userEmail,
       subject: `💊 Time for ${notification.medicationName}!`,
       html: `
         <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px;">
@@ -152,7 +152,7 @@ async function sendMedicationReminderEmail(notification) {
           </div>
           
           <div style="text-align: center; margin: 30px 0;">
-            <a href="https://your-app-url.com?markTaken=${notification.medicationId}" 
+            <a href="https://med-love-reminder.vercel.app?markTaken=${notification.medicationId}" 
                style="background: linear-gradient(135deg, #f24ff0, #ff6b6b); color: white; padding: 15px 30px; text-decoration: none; border-radius: 25px; font-weight: bold; display: inline-block;">
               ✅ Mark as Taken
             </a>
@@ -170,19 +170,12 @@ async function sendMedicationReminderEmail(notification) {
           </div>
         </div>
       `,
-    });
+    };
 
-    if (error) {
-      console.error(
-        `Error sending email to user ${notification.userId}:`,
-        error
-      );
-      throw error;
-    }
-
+    const info = await transporter.sendMail(mailOptions);
     console.log(
       `Email sent successfully to user ${notification.userId}:`,
-      data
+      info.messageId
     );
 
     // Update user's notification count
@@ -239,9 +232,9 @@ async function scheduleFollowUpReminder(
       }
 
       // Send follow-up email
-      const { data, error } = await resend.emails.send({
-        from: "MedLove Reminders <onboarding@resend.dev>", // Using Resend's default domain for testing
-        to: [userEmail],
+      const mailOptions = {
+        from: `"MedLove Reminders" <${functions.config().gmail.user}>`,
+        to: userEmail,
         subject: `⏰ Gentle Reminder: ${notification.medicationName} (${
           reminderCount + 1
         }${
@@ -272,7 +265,7 @@ async function scheduleFollowUpReminder(
             </div>
             
             <div style="text-align: center; margin: 30px 0;">
-              <a href="https://your-app-url.com?markTaken=${
+              <a href="https://med-love-reminder.vercel.app?markTaken=${
                 notification.medicationId
               }" 
                  style="background: linear-gradient(135deg, #ff9500, #ff6b6b); color: white; padding: 15px 30px; text-decoration: none; border-radius: 25px; font-weight: bold; display: inline-block;">
@@ -292,20 +285,14 @@ async function scheduleFollowUpReminder(
             </div>
           </div>
         `,
-      });
+      };
 
-      if (error) {
-        console.error(
-          `Error sending follow-up email to user ${notification.userId}:`,
-          error
-        );
-        return;
-      }
-
+      const info = await transporter.sendMail(mailOptions);
       console.log(
         `Follow-up email sent to user ${notification.userId} (reminder ${
           reminderCount + 1
-        })`
+        }):`,
+        info.messageId
       );
 
       // Schedule next follow-up if needed

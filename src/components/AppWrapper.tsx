@@ -2,6 +2,7 @@
 import { useState, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { useAuth } from "@/hooks/useAuth";
+import { useMedicationReminders } from "@/hooks/useMedicationReminders";
 import { LoginPage } from "./LoginPage";
 import { LogoutButton } from "./LogoutButton";
 
@@ -12,6 +13,9 @@ interface AppWrapperProps {
 export const AppWrapper = ({ children }: AppWrapperProps) => {
   const { user, loading } = useAuth();
   const [showLogin, setShowLogin] = useState(false);
+
+  // Initialize medication reminders hook (this will start the reminder checking)
+  useMedicationReminders();
 
   useEffect(() => {
     if (!loading && !user) {
