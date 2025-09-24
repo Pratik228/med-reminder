@@ -67,8 +67,8 @@ export const useAuth = () => {
         setUser(data.user);
         return { success: true };
       } else {
-        const error = await response.json();
-        return { success: false, error: error.error || "Login failed" };
+        const errorData = await response.json();
+        return { success: false, error: errorData.error || "Login failed" };
       }
     } catch (error) {
       return { success: false, error: "Network error" };
@@ -90,13 +90,15 @@ export const useAuth = () => {
       });
 
       if (response.ok) {
-        const data = await response.json();
         // Auto-login after registration
         const loginResult = await login(email, password);
         return loginResult;
       } else {
-        const error = await response.json();
-        return { success: false, error: error.error || "Registration failed" };
+        const errorData = await response.json();
+        return {
+          success: false,
+          error: errorData.error || "Registration failed",
+        };
       }
     } catch (error) {
       return { success: false, error: "Network error" };

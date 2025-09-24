@@ -1,80 +1,24 @@
 "use client";
 import { motion, AnimatePresence } from "framer-motion";
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import { useAuth } from "@/hooks/useAuth";
 import { MedicationCard } from "./MedicationCard";
 import { StreakCounter } from "./StreakCounter";
 import { BirdAnimation } from "./animations/BirdAnimation";
-import { Medication } from "@/types";
+import { useGetMedicationsQuery, useGetStatsQuery } from "@/lib/api";
 
 export const Dashboard = () => {
   const { user } = useAuth();
-  const [todaysMeds, setTodaysMeds] = useState<Medication[]>([]);
-  const [currentStreak, setCurrentStreak] = useState(0);
   const [showCelebration, setShowCelebration] = useState(false);
 
+  // Fetch data from backend
+  const { data: medications = [] } = useGetMedicationsQuery();
+  const { data: stats } = useGetStatsQuery();
+
   const handleMedicationTaken = (medicationId: string) => {
-    // Update medication status
-    setTodaysMeds((prev) =>
-      prev.map((med) =>
-        med.id === medicationId ? { ...med, isActive: false } : med
-      )
-    );
-
-    // Update streak
-    setCurrentStreak((prev) => prev + 1);
-
     // Show celebration
     setShowCelebration(true);
   };
-
-  // Mock data for demonstration
-  useEffect(() => {
-    const mockMedications: Medication[] = [
-      {
-        id: "1",
-        userId: user?.uid || "",
-        name: "Vitamin D",
-        dosage: "1000 IU",
-        frequency: "daily",
-        times: ["08:00"],
-        startDate: new Date(),
-        color: "bg-primary-500",
-        icon: "💊",
-        isActive: true,
-        createdAt: new Date(),
-      },
-      {
-        id: "2",
-        userId: user?.uid || "",
-        name: "Omega-3",
-        dosage: "1000mg",
-        frequency: "daily",
-        times: ["14:00"],
-        startDate: new Date(),
-        color: "bg-secondary-500",
-        icon: "🐟",
-        isActive: true,
-        createdAt: new Date(),
-      },
-      {
-        id: "3",
-        userId: user?.uid || "",
-        name: "Multivitamin",
-        dosage: "1 tablet",
-        frequency: "daily",
-        times: ["09:00"],
-        startDate: new Date(),
-        color: "bg-green-500",
-        icon: "🌿",
-        isActive: true,
-        createdAt: new Date(),
-      },
-    ];
-
-    setTodaysMeds(mockMedications);
-    setCurrentStreak(12);
-  }, [user]);
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-primary-50 to-secondary-50 dark:from-neu-900 dark:to-neu-800">
@@ -94,12 +38,12 @@ export const Dashboard = () => {
         </motion.div>
 
         {/* Streak Counter */}
-        <StreakCounter streak={currentStreak} />
+        <StreakCounter streak={stats?.streak || 0} />
 
         {/* Today's Medications */}
         <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
           <AnimatePresence>
-            {todaysMeds.map((med, index) => (
+            {medications.map((med, index) => (
               <MedicationCard
                 key={med.id}
                 medication={med}

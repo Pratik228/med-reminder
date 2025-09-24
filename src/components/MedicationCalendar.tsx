@@ -1,5 +1,5 @@
 import { motion } from "framer-motion";
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import { ChevronLeft, ChevronRight } from "lucide-react";
 import {
   format,
@@ -19,9 +19,8 @@ interface CalendarProps {
 }
 
 export const MedicationCalendar = ({
-  userId,
   medicationLogs,
-}: CalendarProps) => {
+}: Omit<CalendarProps, "userId">) => {
   const [currentDate, setCurrentDate] = useState(new Date());
   const monthStart = startOfMonth(currentDate);
   const monthEnd = endOfMonth(currentDate);
