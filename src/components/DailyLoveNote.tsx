@@ -1,8 +1,7 @@
 import { motion, AnimatePresence } from "framer-motion";
 import { useState, useEffect } from "react";
 import { Heart, Edit3, Save, X } from "lucide-react";
-import { doc, updateDoc, onSnapshot } from "firebase/firestore";
-import { db } from "@/lib/firebase";
+// Firestore removed. We'll keep love note in localStorage keyed by userId+date.
 
 interface DailyLoveNoteProps {
   userId: string;
@@ -27,23 +26,19 @@ export const DailyLoveNote = ({ userId }: DailyLoveNoteProps) => {
 
   useEffect(() => {
     if (!userId) return;
-
-    const noteRef = doc(db, "dailyNotes", userId);
-    const unsubscribe = onSnapshot(noteRef, (doc) => {
-      if (doc.exists()) {
-        const data = doc.data();
-        const today = new Date().toDateString();
-        if (data.date === today) {
-          setNote(data.note || getRandomLoveNote());
-        } else {
-          setNote(getRandomLoveNote());
-        }
-      } else {
-        setNote(getRandomLoveNote());
-      }
-    });
-
-    return unsubscribe;
+    const today = new Date().toDateString();
+    const key = `dailyNote:${userId}:${today}`;
+    const stored =
+      typeof window !== "undefined" ? localStorage.getItem(key) : null;
+    if (stored) {
+      setNote(stored);
+    } else {
+      const random = getRandomLoveNote();
+      setNote(random);
+      try {
+        localStorage.setItem(key, random);
+      } catch (_) {}
+    }
   }, [userId]);
 
   const getRandomLoveNote = () => {
@@ -52,14 +47,10 @@ export const DailyLoveNote = ({ userId }: DailyLoveNoteProps) => {
 
   const saveNote = async () => {
     if (!userId) return;
-
+    const today = new Date().toDateString();
+    const key = `dailyNote:${userId}:${today}`;
     try {
-      const noteRef = doc(db, "dailyNotes", userId);
-      await updateDoc(noteRef, {
-        note: editingNote,
-        date: new Date().toDateString(),
-        updatedAt: new Date(),
-      });
+      localStorage.setItem(key, editingNote);
       setNote(editingNote);
       setIsEditing(false);
       setShowHearts(true);

@@ -1,6 +1,8 @@
 "use client";
 import { useState, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
+import { Provider } from "react-redux";
+import { store } from "@/lib/store";
 import { useAuth } from "@/hooks/useAuth";
 import { useMedicationReminders } from "@/hooks/useMedicationReminders";
 import { LoginPage } from "./LoginPage";
@@ -10,7 +12,7 @@ interface AppWrapperProps {
   children: React.ReactNode;
 }
 
-export const AppWrapper = ({ children }: AppWrapperProps) => {
+const AppContent = ({ children }: AppWrapperProps) => {
   const { user, loading } = useAuth();
   const [showLogin, setShowLogin] = useState(false);
 
@@ -76,5 +78,13 @@ export const AppWrapper = ({ children }: AppWrapperProps) => {
         )}
       </AnimatePresence>
     </div>
+  );
+};
+
+export const AppWrapper = ({ children }: AppWrapperProps) => {
+  return (
+    <Provider store={store}>
+      <AppContent>{children}</AppContent>
+    </Provider>
   );
 };

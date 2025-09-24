@@ -1,78 +1,98 @@
-import { useState, useEffect } from "react";
-import {
-  collection,
-  addDoc,
-  updateDoc,
-  deleteDoc,
-  doc,
-  onSnapshot,
-  Timestamp,
-  FieldValue,
-} from "firebase/firestore";
-import { db } from "@/lib/firebase";
-import { Medication } from "@/types";
 import { useAuth } from "./useAuth";
+import {
+  useGetMedicationsQuery,
+  useAddMedicationMutation,
+  useUpdateMedicationMutation,
+  useDeleteMedicationMutation,
+  useToggleMedicationTakenMutation,
+} from "@/lib/api";
+import { Medication } from "@/types";
+
+type NewMedicationInput = Omit<Medication, "id" | "userId" | "createdAt"> & {
+  startDate: string | Date;
+  endDate?: string | Date;
+};
+
+type MedicationUpdates = Partial<
+  Omit<Medication, "id" | "userId" | "createdAt">
+> & {
+  startDate?: string | Date;
+  endDate?: string | Date;
+};
 
 export const useMedications = () => {
   const { user } = useAuth();
-  const [medications, setMedications] = useState<Medication[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
+
+  const {
+    data: medications = [],
+    isLoading: loading,
+    error: queryError,
+  } = useGetMedicationsQuery(undefined, {
+    skip: !user,
+  });
+
+  const [addMedicationMutation, { error: addError }] =
+    useAddMedicationMutation();
+  const [updateMedicationMutation, { error: updateError }] =
+    useUpdateMedicationMutation();
+  const [deleteMedicationMutation, { error: deleteError }] =
+    useDeleteMedicationMutation();
+  const [toggleMedicationTakenMutation, { error: toggleError }] =
+    useToggleMedicationTakenMutation();
+
+  const error =
+    queryError || addError || updateError || deleteError || toggleError;
 
   // Add a new medication
-  const addMedication = async (
-    medicationData: Omit<Medication, "id" | "userId" | "createdAt">
-  ) => {
+  const addMedication = async (medicationData: NewMedicationInput) => {
     if (!user) {
-      setError("User not authenticated");
-      return;
+      throw new Error("User not authenticated");
     }
 
     try {
-      const docRef = await addDoc(collection(db, "medications"), {
+      const result = await addMedicationMutation({
         ...medicationData,
-        userId: user.uid,
-        createdAt: Timestamp.now(),
-        startDate: Timestamp.fromDate(medicationData.startDate),
+        startDate:
+          typeof medicationData.startDate === "string"
+            ? medicationData.startDate
+            : (medicationData.startDate as Date).toISOString(),
         endDate: medicationData.endDate
-          ? Timestamp.fromDate(medicationData.endDate)
-          : null,
-      });
-
-      return docRef.id;
+          ? typeof medicationData.endDate === "string"
+            ? (medicationData.endDate as string)
+            : (medicationData.endDate as Date).toISOString()
+          : undefined,
+      }).unwrap();
+      return result.id;
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Failed to add medication");
       throw err;
     }
   };
 
   // Update a medication
-  const updateMedication = async (id: string, updates: Partial<Medication>) => {
+  const updateMedication = async (id: string, updates: MedicationUpdates) => {
     if (!user) {
-      setError("User not authenticated");
-      return;
+      throw new Error("User not authenticated");
     }
 
     try {
-      const medicationRef = doc(db, "medications", id);
-      const updateData: Record<
-        string,
-        FieldValue | Partial<unknown> | undefined
-      > = { ...updates };
+      const updateData: Record<string, unknown> = { ...updates };
 
-      // Convert Date objects to Timestamps
+      // Convert Date objects to ISO strings
       if (updates.startDate) {
-        updateData.startDate = Timestamp.fromDate(updates.startDate);
+        updateData.startDate =
+          typeof updates.startDate === "string"
+            ? updates.startDate
+            : (updates.startDate as Date).toISOString();
       }
       if (updates.endDate) {
-        updateData.endDate = Timestamp.fromDate(updates.endDate);
+        updateData.endDate =
+          typeof updates.endDate === "string"
+            ? updates.endDate
+            : (updates.endDate as Date).toISOString();
       }
 
-      await updateDoc(medicationRef, updateData);
+      await updateMedicationMutation({ id, updates: updateData }).unwrap();
     } catch (err) {
-      setError(
-        err instanceof Error ? err.message : "Failed to update medication"
-      );
       throw err;
     }
   };
@@ -80,123 +100,33 @@ export const useMedications = () => {
   // Delete a medication
   const deleteMedication = async (id: string) => {
     if (!user) {
-      setError("User not authenticated");
-      return;
+      throw new Error("User not authenticated");
     }
 
     try {
-      await deleteDoc(doc(db, "medications", id));
+      await deleteMedicationMutation(id).unwrap();
     } catch (err) {
-      setError(
-        err instanceof Error ? err.message : "Failed to delete medication"
-      );
       throw err;
     }
   };
 
   // Toggle medication taken status
-  const toggleMedicationTaken = async (id: string, taken: boolean) => {
+  const toggleMedicationTaken = async (id: string) => {
     if (!user) {
-      setError("User not authenticated");
-      return;
+      throw new Error("User not authenticated");
     }
 
     try {
-      await updateMedication(id, { isActive: !taken });
+      await toggleMedicationTakenMutation(id).unwrap();
     } catch (err) {
-      setError(
-        err instanceof Error
-          ? err.message
-          : "Failed to update medication status"
-      );
       throw err;
     }
   };
 
-  // Reset medication status at midnight
-  useEffect(() => {
-    const now = new Date();
-    const tomorrow = new Date(now);
-    tomorrow.setDate(tomorrow.getDate() + 1);
-    tomorrow.setHours(0, 0, 0, 0);
-
-    const timeUntilMidnight = tomorrow.getTime() - now.getTime();
-
-    const timeoutId = setTimeout(() => {
-      // Reset all medications to active (not taken) at midnight
-      medications.forEach(async (medication) => {
-        if (!medication.isActive) {
-          try {
-            await updateMedication(medication.id, { isActive: true });
-          } catch (error) {
-            console.error("Error resetting medication status:", error);
-          }
-        }
-      });
-    }, timeUntilMidnight);
-
-    return () => clearTimeout(timeoutId);
-  }, [medications, user]);
-
-  // Listen to medications changes
-  useEffect(() => {
-    if (!user) {
-      setMedications([]);
-      setLoading(false);
-      return;
-    }
-
-    // Get all medications and filter on client side to avoid index requirements
-    const unsubscribe = onSnapshot(
-      collection(db, "medications"),
-      (snapshot) => {
-        const medicationsData: Medication[] = [];
-
-        snapshot.forEach((doc) => {
-          const data = doc.data();
-
-          // Only include medications for the current user
-          if (data.userId === user.uid) {
-            medicationsData.push({
-              id: doc.id,
-              userId: data.userId,
-              name: data.name,
-              dosage: data.dosage,
-              frequency: data.frequency,
-              times: data.times,
-              startDate: data.startDate?.toDate() || new Date(),
-              endDate: data.endDate?.toDate(),
-              notes: data.notes,
-              color: data.color,
-              icon: data.icon,
-              isActive: data.isActive,
-              createdAt: data.createdAt?.toDate() || new Date(),
-            });
-          }
-        });
-
-        // Sort by createdAt in descending order (newest first)
-        medicationsData.sort(
-          (a, b) => b.createdAt.getTime() - a.createdAt.getTime()
-        );
-
-        setMedications(medicationsData);
-        setLoading(false);
-        setError(null);
-      },
-      (err) => {
-        setError(err.message);
-        setLoading(false);
-      }
-    );
-
-    return () => unsubscribe();
-  }, [user]);
-
   return {
     medications,
     loading,
-    error,
+    error: error ? (error as Error)?.message || "An error occurred" : null,
     addMedication,
     updateMedication,
     deleteMedication,

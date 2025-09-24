@@ -2,19 +2,17 @@
 import { useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { LogOut, User, Settings, Heart } from "lucide-react";
-import { signOut } from "firebase/auth";
-import { auth } from "@/lib/firebase";
 import { useAuth } from "@/hooks/useAuth";
 
 export const LogoutButton = () => {
-  const { user } = useAuth();
+  const { user, logout } = useAuth();
   const [showMenu, setShowMenu] = useState(false);
   const [isLoggingOut, setIsLoggingOut] = useState(false);
 
   const handleLogout = async () => {
     setIsLoggingOut(true);
     try {
-      await signOut(auth);
+      logout();
     } catch (error) {
       console.error("Error signing out:", error);
     } finally {
@@ -61,7 +59,7 @@ export const LogoutButton = () => {
                     {user?.email || "User"}
                   </p>
                   <p className="text-sm text-neu-500 dark:text-neu-400">
-                    {user?.isAnonymous ? "Guest User" : "Registered User"}
+                    Registered User
                   </p>
                 </div>
               </div>

@@ -2,6 +2,7 @@ import type { Metadata, Viewport } from "next";
 import { Inter } from "next/font/google";
 import "./globals.css";
 import { ThemeProvider } from "@/contexts/ThemeContext";
+import { AppWrapper } from "@/components/AppWrapper";
 
 const inter = Inter({
   subsets: ["latin"],
@@ -12,7 +13,6 @@ const inter = Inter({
 export const metadata: Metadata = {
   title: "MedLove - Medication Reminder",
   description: "Your loving medication reminder app",
-  manifest: "/manifest.json",
   appleWebApp: {
     capable: true,
     statusBarStyle: "default",
@@ -70,7 +70,9 @@ export default function RootLayout({
         className={`${inter.variable} font-sans antialiased`}
         suppressHydrationWarning={true}
       >
-        <ThemeProvider>{children}</ThemeProvider>
+        <ThemeProvider>
+          <AppWrapper>{children}</AppWrapper>
+        </ThemeProvider>
       </body>
     </html>
   );

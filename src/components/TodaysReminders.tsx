@@ -40,7 +40,7 @@ export default function TodaysReminders({
           </motion.div>
           Today&apos;s Reminders
           <span className="ml-3 text-sm font-normal text-neu-500 dark:text-neu-400">
-            ({completedCount ?? medications.filter((m) => !m.isActive).length}/
+            ({completedCount ?? medications.filter((m) => m.takenToday).length}/
             {totalCount ?? medications.length} completed)
           </span>
         </h2>
@@ -61,15 +61,14 @@ export default function TodaysReminders({
 
               <div className="flex items-center flex-1 min-w-0">
                 <motion.div
-                  className={`w-8 h-8 bg-gradient-to-r ${
-                    medication.color
-                  } rounded-full mr-6 relative ${
-                    !medication.isActive ? "animate-pulse" : ""
+                  className={`w-8 h-8 rounded-full mr-6 relative ${
+                    medication.takenToday ? "animate-pulse" : ""
                   }`}
-                  animate={!medication.isActive ? { scale: [1, 1.2, 1] } : {}}
+                  style={{ backgroundColor: medication.color }}
+                  animate={medication.takenToday ? { scale: [1, 1.2, 1] } : {}}
                   transition={{ duration: 1, repeat: Infinity }}
                 >
-                  {!medication.isActive && (
+                  {medication.takenToday && (
                     <div className="absolute inset-0 rounded-full bg-green-400 animate-ping"></div>
                   )}
                 </motion.div>
@@ -91,7 +90,7 @@ export default function TodaysReminders({
                 >
                   <Bell
                     className={`w-7 h-7 ${
-                      !medication.isActive
+                      medication.takenToday
                         ? "text-green-500"
                         : "text-primary-500"
                     }`}
@@ -99,7 +98,7 @@ export default function TodaysReminders({
                 </motion.div>
                 <motion.button
                   className={`px-6 py-3 rounded-xl text-base font-medium transition-all duration-200 relative overflow-visible z-30 ${
-                    !medication.isActive
+                    medication.takenToday
                       ? "neu-pressed text-green-600 dark:text-green-400"
                       : "neu text-neu-600 dark:text-neu-400 hover:neu-pressed hover:text-primary-500"
                   }`}
@@ -107,7 +106,7 @@ export default function TodaysReminders({
                   whileHover={{ scale: 1.05 }}
                   whileTap={{ scale: 0.95 }}
                 >
-                  {!medication.isActive ? (
+                  {medication.takenToday ? (
                     <div className="flex items-center space-x-2">
                       <motion.div
                         animate={{ rotate: [0, 360] }}

@@ -1,19 +1,12 @@
 import { useEffect, useCallback, useRef } from "react";
 import { useAuth } from "./useAuth";
 import { useMedications } from "./useMedications";
-
-interface MedicationReminderData {
-  medicationId: string;
-  medicationName: string;
-  dosage: string;
-  time: string;
-  userEmail: string;
-  userName: string;
-}
+import { useSendReminderMutation } from "@/lib/api";
 
 export const useMedicationReminders = () => {
   const { user } = useAuth();
   const { medications } = useMedications();
+  const [sendReminderMutation] = useSendReminderMutation();
   const intervalRef = useRef<NodeJS.Timeout | null>(null);
   const sentRemindersRef = useRef<Set<string>>(new Set());
 
@@ -46,23 +39,13 @@ export const useMedicationReminders = () => {
       const reminderKey = `${medication.id}_${today}_${currentTime}`;
 
       try {
-        const reminderData: MedicationReminderData = {
+        // Call the backend API to send email
+        await sendReminderMutation({
           medicationId: medication.id,
           medicationName: medication.name,
           dosage: medication.dosage,
           time: currentTime,
-          userEmail: user.email || "",
-          userName: user.displayName || user.email?.split("@")[0] || "there",
-        };
-
-        // Call the API route to send email
-        await fetch("/api/send-reminder", {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-          },
-          body: JSON.stringify(reminderData),
-        });
+        }).unwrap();
 
         // Mark this reminder as sent
         sentRemindersRef.current.add(reminderKey);
@@ -72,7 +55,7 @@ export const useMedicationReminders = () => {
         console.error(`Failed to send reminder for ${medication.name}:`, error);
       }
     }
-  }, [user, medications]);
+  }, [user, medications, sendReminderMutation]);
 
   // Start the reminder checking interval
   useEffect(() => {
@@ -126,24 +109,14 @@ export const useMedicationReminders = () => {
       const now = new Date();
       const currentTime = now.toTimeString().slice(0, 5);
 
-      const reminderData: MedicationReminderData = {
-        medicationId: medication.id,
-        medicationName: medication.name,
-        dosage: medication.dosage,
-        time: currentTime,
-        userEmail: user.email || "",
-        userName: user.displayName || user.email?.split("@")[0] || "there",
-      };
-
       try {
-        // Call the API route to send email
-        await fetch("/api/send-reminder", {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-          },
-          body: JSON.stringify(reminderData),
-        });
+        // Call the backend API to send email
+        await sendReminderMutation({
+          medicationId: medication.id,
+          medicationName: medication.name,
+          dosage: medication.dosage,
+          time: currentTime,
+        }).unwrap();
         console.log(`Manual reminder sent for ${medication.name}`);
       } catch (error) {
         console.error(
@@ -153,7 +126,7 @@ export const useMedicationReminders = () => {
         throw error;
       }
     },
-    [user, medications]
+    [user, medications, sendReminderMutation]
   );
 
   return {

@@ -38,7 +38,7 @@ export const AddMedicationForm = ({
         dosage: formData.dosage,
         frequency: formData.frequency,
         times: [formData.time],
-        startDate: new Date(),
+        startDate: new Date().toISOString(),
         notes: formData.notes,
         color: formData.color,
         icon: formData.icon,
@@ -64,32 +64,32 @@ export const AddMedicationForm = ({
 
   const colorOptions = [
     {
-      value: "from-primary-500 to-pink-500",
+      value: "#f24ff0",
       label: "Pink",
       preview: "bg-gradient-to-r from-primary-500 to-pink-500",
     },
     {
-      value: "from-secondary-500 to-purple-500",
+      value: "#8b5cf6",
       label: "Purple",
       preview: "bg-gradient-to-r from-secondary-500 to-purple-500",
     },
     {
-      value: "from-green-500 to-emerald-500",
+      value: "#10b981",
       label: "Green",
       preview: "bg-gradient-to-r from-green-500 to-emerald-500",
     },
     {
-      value: "from-blue-500 to-cyan-500",
+      value: "#3b82f6",
       label: "Blue",
       preview: "bg-gradient-to-r from-blue-500 to-cyan-500",
     },
     {
-      value: "from-orange-500 to-red-500",
+      value: "#f97316",
       label: "Orange",
       preview: "bg-gradient-to-r from-orange-500 to-red-500",
     },
     {
-      value: "from-yellow-500 to-amber-500",
+      value: "#eab308",
       label: "Yellow",
       preview: "bg-gradient-to-r from-yellow-500 to-amber-500",
     },

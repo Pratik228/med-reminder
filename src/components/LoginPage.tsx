@@ -10,18 +10,15 @@ import {
   ArrowRight,
   CheckCircle,
 } from "lucide-react";
-import {
-  signInWithEmailAndPassword,
-  createUserWithEmailAndPassword,
-  signInAnonymously,
-} from "firebase/auth";
-import { auth } from "@/lib/firebase";
+import { useAuth } from "@/hooks/useAuth";
+// Firebase removed. We'll simulate auth by storing a user object in localStorage.
 
 interface LoginPageProps {
   onLogin: () => void;
 }
 
 export const LoginPage = ({ onLogin }: LoginPageProps) => {
+  const { login, register } = useAuth();
   const [isLogin, setIsLogin] = useState(true);
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
@@ -41,38 +38,29 @@ export const LoginPage = ({ onLogin }: LoginPageProps) => {
 
     try {
       if (isLogin) {
-        await signInWithEmailAndPassword(auth, email, password);
-        setSuccess("Welcome back! 💕");
+        const result = await login(email, password);
+        if (result.success) {
+          setSuccess("Welcome back! 💕");
+          setTimeout(() => {
+            onLogin();
+          }, 800);
+        } else {
+          setError(result.error || "Login failed");
+        }
       } else {
-        await createUserWithEmailAndPassword(auth, email, password);
-        setSuccess("Account created! Welcome to MedLove! 🎉");
+        const result = await register(email, password, email.split("@")[0]);
+        if (result.success) {
+          setSuccess("Account created! Welcome to MedLove! 🎉");
+          setTimeout(() => {
+            onLogin();
+          }, 800);
+        } else {
+          setError(result.error || "Registration failed");
+        }
       }
-
-      setTimeout(() => {
-        onLogin();
-      }, 1500);
     } catch (err: unknown) {
-      console.error("Auth error:", err);
-      const error = err as { code?: string; message?: string };
-      switch (error.code) {
-        case "auth/user-not-found":
-          setError("No account found with this email");
-          break;
-        case "auth/wrong-password":
-          setError("Incorrect password");
-          break;
-        case "auth/email-already-in-use":
-          setError("Email already in use");
-          break;
-        case "auth/weak-password":
-          setError("Password should be at least 6 characters");
-          break;
-        case "auth/invalid-email":
-          setError("Invalid email address");
-          break;
-        default:
-          setError(error.message || "Something went wrong");
-      }
+      const error = err as { message?: string };
+      setError(error.message || "Something went wrong");
     } finally {
       setIsLoading(false);
     }
@@ -83,19 +71,14 @@ export const LoginPage = ({ onLogin }: LoginPageProps) => {
     setError("");
 
     try {
-      await signInAnonymously(auth);
-      setSuccess("Welcome, guest! 👋");
-      setTimeout(() => {
-        onLogin();
-      }, 1000);
+      // For guest mode, we'll create a temporary user or use a demo account
+      // You might want to implement a guest endpoint in your backend
+      setError("Guest login not implemented yet. Please register or sign in.");
     } catch (err: unknown) {
-      console.error("Guest login error:", err);
-      const error = err as { code?: string; message?: string };
-      if (error.code === "auth/operation-not-allowed") {
-        setError("Guest login is not enabled. Please sign up or sign in.");
-      } else {
-        setError("Failed to sign in as guest. Please try again.");
-      }
+      const error = err as { message?: string };
+      setError(
+        error.message || "Failed to sign in as guest. Please try again."
+      );
     } finally {
       setIsLoading(false);
     }

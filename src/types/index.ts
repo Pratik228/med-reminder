@@ -1,9 +1,9 @@
 export interface User {
-  uid: string;
+  id: string;
   email: string;
   displayName: string;
   photoURL?: string;
-  createdAt: Date;
+  createdAt: string; // ISO string
   preferences: {
     theme: "light" | "dark";
     notifications: boolean;
@@ -18,24 +18,29 @@ export interface Medication {
   dosage: string;
   frequency: "daily" | "weekly" | "custom";
   times: string[]; // ['09:00', '21:00']
-  startDate: Date;
-  endDate?: Date;
+  startDate: string; // ISO string
+  endDate?: string; // ISO string
   notes?: string;
   color: string;
   icon: string;
+  // Whether this medication is currently enabled for the user
   isActive: boolean;
-  createdAt: Date;
+  // Daily status fields (Option 1 implementation)
+  takenToday?: boolean; // true if user has marked as taken for the current date
+  takenOnDate?: string; // YYYY-MM-DD in user's timezone when last takenToday was set
+  lastTakenAt?: string; // ISO string of last mark-as-taken
+  createdAt: string; // ISO string
 }
 
 export interface MedicationLog {
   id: string;
   userId: string;
   medicationId: string;
-  scheduledTime: Date;
-  takenAt?: Date;
+  scheduledTime: string; // ISO string
+  takenAt?: string; // ISO string
   status: "taken" | "missed" | "pending";
   notes?: string;
-  createdAt: Date;
+  createdAt: string; // ISO string
 }
 
 export interface Streak {
@@ -44,6 +49,14 @@ export interface Streak {
   medicationId: string;
   currentStreak: number;
   longestStreak: number;
-  lastTaken: Date;
-  updatedAt: Date;
+  lastTaken: string; // ISO string
+  updatedAt: string; // ISO string
+}
+
+export interface Stats {
+  streak: number;
+  compliance: number;
+  weeklyCount: number;
+  todayCompleted: number;
+  todayTotal: number;
 }

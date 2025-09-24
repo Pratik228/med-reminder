@@ -50,7 +50,8 @@ export const MedicationCard = ({
         <div className="flex items-center justify-between mb-4">
           <div className="flex items-center space-x-3">
             <motion.div
-              className={`p-3 rounded-full ${medication.color} relative`}
+              className="p-3 rounded-full relative"
+              style={{ backgroundColor: medication.color }}
               animate={isTaken ? { scale: [1, 1.1, 1] } : {}}
               transition={{ duration: 0.5 }}
             >

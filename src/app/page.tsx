@@ -66,7 +66,7 @@ export default function Home() {
     try {
       const medication = medications.find((med) => med.id === id);
       if (medication) {
-        await toggleMedicationTaken(id, medication.isActive);
+        await toggleMedicationTaken(id);
       }
     } catch (error) {
       console.error("Error toggling medication:", error);
@@ -576,7 +576,7 @@ export default function Home() {
                         Today&apos;s Schedule
                       </h3>
                       <span className="ml-3 text-sm font-normal text-neu-500 dark:text-neu-400 bg-neu-100 dark:bg-neu-800 px-3 py-1 rounded-full">
-                        {medications.filter((m) => !m.isActive).length}/
+                        {medications.filter((m) => m.takenToday).length}/
                         {medications.length} completed
                       </span>
                     </div>
